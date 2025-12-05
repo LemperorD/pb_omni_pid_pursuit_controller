@@ -40,7 +40,7 @@ public:
   OmniPidPursuitController() = default;
 
   /**
-   * @brief Destrructor for
+   * @brief Destructor for
    * pb_omni_pid_pursuit_controller::OmniPidPursuitController
    */
   ~OmniPidPursuitController() override = default;
