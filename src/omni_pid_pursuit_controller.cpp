@@ -242,6 +242,7 @@ geometry_msgs::msg::TwistStamped OmniPidPursuitController::computeVelocityComman
     angle_to_goal = tf2::getYaw(transformed_plan.poses.back().pose.orientation);
     if (fabs(angle_to_goal) > use_rotate_to_heading_treshold_) {
       lin_dist = 0;
+      // RCLCPP_INFO(logger_, "Rotating to heading only. Angle to goal: %.2f rad", angle_to_goal);
     }
   }
 
