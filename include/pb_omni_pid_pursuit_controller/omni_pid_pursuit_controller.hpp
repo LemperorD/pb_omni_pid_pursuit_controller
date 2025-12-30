@@ -21,7 +21,16 @@
 
 #include "nav2_core/controller.hpp"
 #include "pb_omni_pid_pursuit_controller/pid.hpp"
+
+#include "std_msgs/msg/u_int8.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
+
+typedef enum
+{
+  chassisFollowed = 1,
+  littleTES,
+  goHome,
+} ChassisMode;
 
 namespace pb_omni_pid_pursuit_controller
 {
@@ -195,6 +204,12 @@ protected:
    * @return True if collision detected, false otherwise
    */
   bool isCollisionDetected(const nav_msgs::msg::Path & path);
+  
+  /**
+   * @brief Callback function for chassis mode subscription, in order to switch control modes(littleTES/chassisFollowed)
+   * @param msg Shared pointer to the received message
+   */
+  void chassisModeCallback(const std_msgs::msg::UInt8::SharedPtr msg);
 
 private:
   /**
@@ -304,6 +319,8 @@ private:
   rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PointStamped>::SharedPtr carrot_pub_;
   rclcpp_lifecycle::LifecyclePublisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     curvature_points_pub_;
+
+  rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr chassis_mode_sub_;
 
   // Dynamic parameters handler
   std::mutex mutex_;

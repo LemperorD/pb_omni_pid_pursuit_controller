@@ -168,6 +168,9 @@ void OmniPidPursuitController::configure(
       ->create_publisher<visualization_msgs::msg::MarkerArray>(  // 初始化 MarkerArray Publisher
         "curvature_points_marker_array", rclcpp::QoS(10));
 
+  chassis_mode_sub_ = node->create_subscription<std_msgs::msg::UInt8>(
+    "chassis_mode", 1, std::bind(&OmniPidPursuitController::chassisModeCallback, this, std::placeholders::_1));
+
   move_pid_ = std::make_shared<PID>(
     control_duration_, v_linear_max_, v_linear_min_, translation_kp_, translation_kd_,
     translation_ki_);
@@ -199,8 +202,8 @@ void OmniPidPursuitController::activate()
   curvature_points_pub_->on_activate();
   // Add callback for dynamic parameters
   auto node = node_.lock();
-  dyn_params_handler_ = node->add_on_set_parameters_callback(
-    std::bind(&OmniPidPursuitController::dynamicParametersCallback, this, std::placeholders::_1));
+  // dyn_params_handler_ = node->add_on_set_parameters_callback(
+  //   std::bind(&OmniPidPursuitController::dynamicParametersCallback, this, std::placeholders::_1));
 }
 
 void OmniPidPursuitController::deactivate()
@@ -213,7 +216,7 @@ void OmniPidPursuitController::deactivate()
   local_path_pub_->on_deactivate();
   carrot_pub_->on_deactivate();
   curvature_points_pub_->on_deactivate();
-  dyn_params_handler_.reset();
+  // dyn_params_handler_.reset();
 }
 
 geometry_msgs::msg::TwistStamped OmniPidPursuitController::computeVelocityCommands(
@@ -680,6 +683,14 @@ geometry_msgs::msg::PoseStamped OmniPidPursuitController::findPoseAtDistance(
   interpolated_pose.pose.orientation = pose2.pose.orientation;
 
   return interpolated_pose;
+}
+
+void OmniPidPursuitController::chassisModeCallback(const std_msgs::msg::UInt8::SharedPtr msg){
+  if(msg->data == chassisFollowed){
+    // RCLCPP_INFO(logger_, "");
+    enable_rotation_ = true;
+    use_rotate_to_heading_ = true;
+  }
 }
 
 rcl_interfaces::msg::SetParametersResult OmniPidPursuitController::dynamicParametersCallback(
