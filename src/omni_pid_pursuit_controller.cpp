@@ -691,6 +691,10 @@ void OmniPidPursuitController::chassisModeCallback(const std_msgs::msg::UInt8::S
     enable_rotation_ = true;
     use_rotate_to_heading_ = true;
   }
+  else if(msg->data == littleTES){
+    enable_rotation_ = false;
+    use_rotate_to_heading_ = false;
+  }
 }
 
 rcl_interfaces::msg::SetParametersResult OmniPidPursuitController::dynamicParametersCallback(
