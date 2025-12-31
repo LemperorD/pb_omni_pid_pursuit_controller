@@ -239,7 +239,16 @@ geometry_msgs::msg::TwistStamped OmniPidPursuitController::computeVelocityComman
 
   double lin_dist = hypot(carrot_pose.pose.position.x, carrot_pose.pose.position.y);
   double theta_dist = atan2(carrot_pose.pose.position.y, carrot_pose.pose.position.x);
-  double angle_to_goal = tf2::getYaw(carrot_pose.pose.orientation);
+
+  double path_yaw;
+  if (transformed_plan.poses.size() > 1) {
+    auto &p0 = transformed_plan.poses[0].pose.position;
+    auto &p1 = transformed_plan.poses[1].pose.position;
+    path_yaw = std::atan2(p1.y - p0.y, p1.x - p0.x);
+  } else {
+    path_yaw = theta_dist; // 兜底
+  }
+  double angle_to_goal = path_yaw;
 
   if (use_rotate_to_heading_) {
     angle_to_goal = tf2::getYaw(transformed_plan.poses.back().pose.orientation);
@@ -271,8 +280,14 @@ geometry_msgs::msg::TwistStamped OmniPidPursuitController::computeVelocityComman
   geometry_msgs::msg::TwistStamped cmd_vel;
   cmd_vel.header = pose.header;
   if (!isCollisionDetected(costmap_frame_local_plan)) {
-    cmd_vel.twist.linear.x = lin_vel * cos(theta_dist);
-    cmd_vel.twist.linear.y = lin_vel * sin(theta_dist);
+    if (enable_rotation_){
+      cmd_vel.twist.linear.x = lin_vel * cos(path_yaw);
+      cmd_vel.twist.linear.y = lin_vel * sin(path_yaw);
+    }
+    else {
+      cmd_vel.twist.linear.x = lin_vel * cos(theta_dist);
+      cmd_vel.twist.linear.y = lin_vel * sin(theta_dist);
+    }
     cmd_vel.twist.angular.z = angular_vel;
   } else {
     throw nav2_core::PlannerException("Collision detected in the trajectory. Stopping the robot!");
@@ -687,13 +702,10 @@ geometry_msgs::msg::PoseStamped OmniPidPursuitController::findPoseAtDistance(
 
 void OmniPidPursuitController::chassisModeCallback(const std_msgs::msg::UInt8::SharedPtr msg){
   if(msg->data == chassisFollowed){
-    // RCLCPP_INFO(logger_, "");
     enable_rotation_ = true;
-    use_rotate_to_heading_ = true;
   }
   else if(msg->data == littleTES){
     enable_rotation_ = false;
-    use_rotate_to_heading_ = false;
   }
 }
 
